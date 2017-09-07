@@ -1,7 +1,9 @@
-function [x,y,V,dT,Xp,Yp,xT1,yT1,idphi,nidphi,mouse,trial,sess,conc,frame,zidphi,znidphi,nearX,nearY,nx,ny,nV,mouseT,sessT,mouse1,sess1,mouseName1,mouseName2,dnT,Xnp,Ynp,C,nC,znC,zC,bait,Y] = Wrap_OdorTrails
-%[x,y,V,dT,Xp,Yp,xT1,yT1,idphi,nidphi,mouse,trial,sess,conc,frame,zidphi,znidphi,nearX,nearY,nx,ny,nV,mouseT,sessT,mouse1,sess1,mouseName1,mouseName2,dnT,Xnp,Ynp,C,nC,znC,zC,bait,Y] = Wrap_OdorTrails
+function [x,y,V,dT,Xp,Yp,xT1,yT1,idphi,nidphi,mouse,trial,sess,conc,frame,nearX,nearY,nx,ny,nV,mouseT,sessT,mouse1,sess1,mouseName1,mouseName2,dnT,Xnp,Ynp,bait,Y,L,nL,zz] = Wrap_OdorTrails
+% [x,y,V,dT,Xp,Yp,xT1,yT1,idphi,nidphi,mouse,trial,sess,conc,frame,nearX,nearY,nx,ny,nV,mouseT,sessT,mouse1,sess1,mouseName1,mouseName2,dnT,Xnp,Ynp,bait,Y,L,nL,zz] = Wrap_OdorTrails
 % 2017-07-03 AndyP
 % 2017-07-26 AndyP updated with foaw_diff, Tortuosity1 and zIdPhi1
+% 2017-09-07 AndyP updated with SplineCurvature, removed Curvature and some
+% outputs
 % Wrapper function to process and concatenate position data from optimouse
 % and extracted trails from getTrail_GUI3.  Position data and derivatives are in the format (nframes x
 % 1) where nframes is the total number of frames to be analyzed.  Trail
@@ -88,10 +90,10 @@ homedir = cd;
 
 readXLS = true;
 pathType = 'Y';
-postSmoothing = 0.25; % s
+postSmoothing = 0.2; % s
 %window = 0.5; % s
 m = 50;
-d = 1;
+d = 0.5;
 dtime = 1/50; % Hz
 
 trial0 = [];
@@ -269,10 +271,10 @@ yT1 = [];
 dT = [];
 Xp = [];
 Yp = [];
-C = [];
-nC = [];
-zC = [];
-znC = [];
+% C = [];
+% nC = [];
+% zC = [];
+% znC = [];
 idphi = [];
 nidphi = [];
 mouse = [];
@@ -293,8 +295,8 @@ lastMouse = '';
 iM = 1;
 iS = 0;
 mouseName2 = [];
-zidphi = [];
-znidphi = [];
+% zidphi = [];
+% znidphi = [];
 dnT = [];
 Xnp = [];
 Ynp = [];
@@ -311,6 +313,9 @@ Yarm = cell(3,1);
 dTarm = cell(3,1);
 dnTarm = cell(3,1);
 bait = [];
+L = [];
+nL = [];
+zz = [];
 for iD=1:nD
     cd(homedir);
     fprintf('%s %d/%d \n',trailFiles(iD).name,iD,nD);
@@ -404,11 +409,18 @@ for iD=1:nD
     Ynp = cat(1,Ynp,yT0(In));
     
     
-    C0 = Tortuosity1(dx,dy,dtime,m,d,postSmoothing);
-    C = cat(1,C,C0);
+%     C0 = Tortuosity1(dx,dy,dtime,m,d,postSmoothing);
+%     C = cat(1,C,C0);
     %
-    nC0 = Tortuosity1(ndx,ndy,dtime,m,d,postSmoothing);
-    nC = cat(1,nC,nC0);
+%     nC0 = Tortuosity1(ndx,ndy,dtime,m,d,postSmoothing);
+%     nC = cat(1,nC,nC0);
+    
+    [~,L0] = SplineCurvature(x0,y0);
+    L = cat(1,L,L0);
+    
+    [zz0,nL0] = SplineCurvature(nx0,ny0);
+    zz = cat(1,zz,zz0);
+    nL = cat(1,nL,nL0);
     
     % compute idphi
     idphi0 = zIdPhi1(dx,dy,dtime,m,d,postSmoothing);
@@ -417,11 +429,11 @@ for iD=1:nD
     idphi = cat(1,idphi,idphi0);
     nidphi = cat(1,nidphi,nidphi0);
     
-    zidphi= cat(1,zidphi,nanzscore(abs(idphi0)));
-    znidphi= cat(1,znidphi,nanzscore(abs(nidphi0)));
+%     zidphi= cat(1,zidphi,nanzscore(abs(idphi0)));
+%     znidphi= cat(1,znidphi,nanzscore(abs(nidphi0)));
     
-    zC = cat(1,zC,nanzscore(abs(C0)));
-    znC = cat(1,znC,nanzscore(abs(nC0)));
+%     zC = cat(1,zC,nanzscore(abs(C0)));
+%     znC = cat(1,znC,nanzscore(abs(nC0)));
     
     if strcmp(pathType,'Y') % compute additional parameters
         dTc0 = nan(length(x0),1);
